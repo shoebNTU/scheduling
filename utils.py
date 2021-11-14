@@ -1,14 +1,14 @@
 from typing import OrderedDict
-from numpy.core.fromnumeric import size
+# from numpy.core.fromnumeric import size
 import pandas as pd
 import streamlit as st 
 import numpy as np  
 from scipy.spatial import distance
 from itertools import combinations
-from scipy.stats import rankdata
-from skcriteria import Data
-from skcriteria.madm.simus import SIMUS
-from skcriteria.madm import closeness
+# from scipy.stats import rankdata
+# from skcriteria import Data
+# from skcriteria.madm.simus import SIMUS
+# from skcriteria.madm import closeness
 
 # function to load input
 @st.cache(show_spinner=False,suppress_st_warning=True)
