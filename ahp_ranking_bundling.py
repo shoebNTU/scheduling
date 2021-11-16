@@ -34,6 +34,7 @@ if temp:
         df = pd.read_excel(temp)
         st.text('Before bundling')
         st.dataframe(df)
+        df['Bundle'].fillna(df.index.to_series()+1000, inplace=True) # giving bundle numbers to empty strings, such that groupby works for them
         df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'max','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
         # st.subheader('Interventions')
         st.text('After bundling')
