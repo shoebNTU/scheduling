@@ -179,7 +179,7 @@ class AHP():
             self.recommendation = np.concatenate(arrays, axis=1).dot(self.output)
         self.df_decision = pd.DataFrame(data=self.recommendation, index=self.alternative, columns = ['AHP Score'])
         self.df_decision.index.name = 'Alternative'
-        self.df_decision['rank'] = self.df_decision['AHP Score'].rank(ascending=True)
+        self.df_decision['rank'] = self.df_decision['AHP Score'].rank(ascending=False) # AHP-maximize
         return self.df_decision
 
 def AHP_rank(df,criteria_matrix):

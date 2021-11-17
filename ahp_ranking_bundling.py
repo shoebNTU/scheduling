@@ -31,14 +31,16 @@ temp = st.sidebar.file_uploader(label='', type=['xlsx'])
 if temp:
 
     with st.expander('Interventions',expanded=False):
+        st.info('Bundling logic:  \n Cost-sum, Risk-max, FPMK-sum')
         df = pd.read_excel(temp)
         st.text('Before bundling')
         st.dataframe(df)
         df['Bundle'].fillna(df.index.to_series()+1000, inplace=True) # giving bundle numbers to empty strings, such that groupby works for them
         df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'max','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
-        # st.subheader('Interventions')
+        # st.subheader('Interventions')        
         st.text('After bundling')
         st.dataframe(df)
+        
     # df = pd.read_excel('ip_1.xlsx') # reading inputs
 
     # if st.button('Show interventions'):
@@ -60,24 +62,30 @@ if temp:
            crit_value = 1.0        
         
         if crit_value:
+            
+            st.info('AHP:  \nMaximizes delta-FPMK, minizes Risk  \nHighest value of AHP-score --> Rank-1')
+            st.info('Cost and AHP based final rank:  \nCost-Benefit Ratio(CBR) = AHP-score/(normalized cost)  \nHighest CBR --> Rank-1')
+
             if st.button('Rank and schedule'):
                 to_display_df = df.copy()
+                df['Risk'] = 1.0/df['Risk'] #taking inverse of risk, trying to maximize
                 # a = 1.0
                 # a,b,c = 1.0,1.0,1.0
                 criteria_matrix = np.array([[1.0, crit_value],[1.0/crit_value, 1.0]])# np.array([[1.0,a,b],[1/a,1.0,c],[1/c,1/b,1.0]])
                 ahp_df= AHP_rank(df[['Risk','FPMK']],criteria_matrix) 
                 st.write(AHP_rel_imp(df[['Risk','FPMK']],criteria_matrix))
                 # st.write(crit_importance)
-                CBR = 1/((df.Cost/df.Cost.sum()).values*ahp_df['AHP Score'].values) # computing cost-benefit ratio
+                CBR = ahp_df['AHP Score'].values/(df.Cost/df.Cost.sum()).values # changed for AHP-maximize
+                # CBR = 1/((df.Cost/df.Cost.sum()).values*ahp_df['AHP Score'].values) # computing cost-benefit ratio
                 # CBR = (1-ahp_df['AHP Score'].values)/((df.Cost/df.Cost.sum()).values) # computing cost-benefit ratio
                 rank_ = len(CBR) - np.argsort(np.argsort(CBR))
                 to_display_df['AHP Score'] = ahp_df['AHP Score']     
                 to_display_df['AHP-ranks'] = ahp_df['rank'].apply(np.int64)#.astype(uint8) 
                 to_display_df['Normalized Cost'] =  ((df.Cost/df.Cost.sum()).values)              
-                to_display_df['Cost Benefit Ratio'] = CBR#/(np.sum(CBR))
-                to_display_df['Cost Benefit Ratio-ranks'] = rank_#ahp_df['rank'].apply(np.int64)#.astype(uint8) 
+                to_display_df['Benefit Cost Ratio'] = CBR#/(np.sum(CBR))
+                to_display_df['Benefit Cost Ratio-ranks'] = rank_#ahp_df['rank'].apply(np.int64)#.astype(uint8) 
                 to_display_df.drop(columns=['Start Date','End Date'],inplace=True)               
-                cm = sns.light_palette("green", as_cmap=True, reverse=True)
+                cm = sns.light_palette("green", as_cmap=True, reverse=True) #
                 st.dataframe(to_display_df.style.background_gradient(cmap=cm))
 
                 df['duration-months'] = ((df['End Date'] - df['Start Date'])/np.timedelta64(1, 'M')).astype(int)
