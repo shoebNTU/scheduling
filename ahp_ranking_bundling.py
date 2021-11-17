@@ -31,7 +31,7 @@ temp = st.sidebar.file_uploader(label='', type=['xlsx'])
 if temp:
 
     with st.expander('Interventions',expanded=False):
-        st.info('Bundling logic:  \n Cost-sum, Risk-max, FPMK-sum')
+        st.info('Bundling logic:  \n Cost-sum, Risk-max, FPMK-sum, Startdate-min, Enddate-max')
         df = pd.read_excel(temp)
         st.text('Before bundling')
         st.dataframe(df)
