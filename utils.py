@@ -5,6 +5,7 @@ import streamlit as st
 import numpy as np  
 from scipy.spatial import distance
 from itertools import combinations
+import plotly.graph_objects as go
 # from scipy.stats import rankdata
 # from skcriteria import Data
 # from skcriteria.madm.simus import SIMUS
@@ -61,6 +62,57 @@ def MOO(df):
     rank_MOO = dist.argsort().argsort()+1
     # st.text()
     return rank_MOO
+
+def MOO_explain(df):
+    cols = df.columns.to_list() # taking first two columns    
+    conv_comb = get_grid(8,df.shape[0]).dot(df.values) # getting convex combination here
+    mask = is_pareto_efficient(conv_comb) # getting index of points of conv_comb that are pareto optimal
+    
+    st.info('Comparing on the basis of - '+(' ').join(cols)) # 
+    df_convcomb = pd.DataFrame(conv_comb,columns=cols) #hard-coding to risk, fpmk
+    df_convcomb['Pareto-status'] = 'Non-pareto'
+    df_convcomb.loc[mask,'Pareto-status'] = 'Pareto' # set of pareto-points
+
+    # ranking here 
+    inv = df.values.copy()
+    num_interventions = inv.shape[0]
+    pareto = conv_comb[mask]/inv.sum(axis=0)
+    inv = inv/inv.sum(axis=0)
+
+    dist = []
+
+    for i in range(num_interventions):
+        dist.append(np.mean(np.min(distance.cdist((inv)[i].reshape(1,2),pareto),axis=1))*1000+inv.sum(axis=1)[i])
+    dist = np.array(dist)
+
+    rank_MOO = dist.argsort().argsort()+1
+    df['rank'] = rank_MOO
+    df['rank'] = df['rank'].apply(lambda x:'Rank'+str(x))
+
+    # Scatter plot
+    data = [go.Scatter(x=df[cols[0]],y=df[cols[1]],mode='markers',marker=dict(size=25,color='#636EFA'),opacity=0.8,name='User options', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f}',marker_symbol='star',text=df['rank'].to_list(),textposition="bottom center",textfont_size=16),
+        go.Scatter(x=df_convcomb[cols[0]],y=df_convcomb[cols[1]],mode='markers',marker=dict(size=5),opacity=0.6,name='Convex combinations', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f}',marker_symbol='x'),
+        go.Scatter(x=df_convcomb[cols[0]][mask],y=df_convcomb[cols[1]][mask],mode='markers',marker=dict(size=20),opacity=0.6,name='Pareto-optimal options', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f} ',marker_symbol='cross'),
+        go.Scatter(x=df[cols[0]],y=df[cols[1]],mode='markers+text',marker=dict(size=25,color='#636EFA'),opacity=0.6,name='User options', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f}',marker_symbol='star',text=df['rank'].to_list(),textposition="bottom center",textfont_size=16,showlegend=False)]
+    fig = go.Figure(data)
+    # fig.update_layout(scene=dict(xaxis_title='Cost',yaxis_title='Risk'))
+    fig.update_layout(
+        title="MOO",
+        xaxis_title = cols[0],
+        yaxis_title = cols[1],
+    #     legend_title="Legend Title",
+        font=dict(
+            family="Courier New, monospace",
+            size=14,
+            color="Black"
+        )
+    )
+    # fig.update_traces(textposition='top center')
+    return fig,df
 
 
 # AHP function
