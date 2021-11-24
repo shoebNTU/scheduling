@@ -18,7 +18,8 @@ def app():
             df = pd.read_excel(temp)
             st.dataframe(df.iloc[:,:3])
         
-        with st.expander('MOO',expanded=False):
+        with st.expander('MOO visualized',expanded=False):
+            st.info('Trying to visualize MOO method here. Two departures have been made from implementation in the project to ease visualization -  \n1) Only two criteria have been considered while doing ranking  \n2) Number of points along each criteria to get convex combination of objectives has been set arbitrarily set to a relatively lower value as H=8 (please refer section 6.6.6.1 of UJ5 SDS for more details on H)')
             cols = df.columns.to_list()
             option1 = st.selectbox('Select two criteria to base your MOO on',
             [[cols[0],cols[1]],[cols[1],cols[2]],[cols[0],cols[2]]])

@@ -64,11 +64,13 @@ def MOO(df):
     return rank_MOO
 
 def MOO_explain(df):
-    cols = df.columns.to_list() # taking first two columns    
-    conv_comb = get_grid(8,df.shape[0]).dot(df.values) # getting convex combination here
+    cols = df.columns.to_list() # taking first two columns
+    points_dict = {1:1, 2:500, 3:100, 4:50, 5:25, 6:18, 7:15, 8:12, 9:10, 10:9}
+    H = 8 # hard-coding to 8 for easy visualization #points_dict[df.shape[0]]
+    conv_comb = get_grid(H,df.shape[0]).dot(df.values) # getting convex combination here
     mask = is_pareto_efficient(conv_comb) # getting index of points of conv_comb that are pareto optimal
     
-    st.info('Comparing on the basis of - '+(' ').join(cols)) # 
+    st.info('Comparing on the basis of - '+(',').join(cols)) # 
     df_convcomb = pd.DataFrame(conv_comb,columns=cols) #hard-coding to risk, fpmk
     df_convcomb['Pareto-status'] = 'Non-pareto'
     df_convcomb.loc[mask,'Pareto-status'] = 'Pareto' # set of pareto-points
