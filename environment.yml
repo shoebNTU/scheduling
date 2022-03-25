@@ -2,12 +2,12 @@
 channels:
   - conda-forge
   - defaults
-dependencies:
-  - pip=21.0.1=py38haa95532_0 
+dependencies: 
   - plotly=5.3.1=pyhd8ed1ab_0 
   - seaborn=0.11.1=pyhd3eb1b0_0
   - more-itertools=8.7.0=pyhd3eb1b0_0
   - typing_extensions=3.7.4.3=pyha847dfd_0
+  - pip=21.0.1=py38haa95532_0
 
   - pip:     
     - streamlit==1.7.0
