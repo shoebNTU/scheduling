@@ -9,7 +9,8 @@ dependencies:
   - typing_extensions=3.7.4.3=pyha847dfd_0
   - pip
 
-  - pip:     
+  - pip:
+    - pip==21.0.1
     - streamlit==1.7.0
     - matplotlib==3.5.1
     - pandas==1.2.4
