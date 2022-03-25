@@ -79,8 +79,8 @@ def app():
                     to_display_df['Benefit Cost Ratio'] = CBR#/(np.sum(CBR))
                     to_display_df['Benefit Cost Ratio-ranks'] = rank_#ahp_df['rank'].apply(np.int64)#.astype(uint8) 
                     to_display_df.drop(columns=['Start Date','End Date'],inplace=True)               
-                    cm = sns.light_palette("green", as_cmap=True, reverse=True) #
-                    st.dataframe(to_display_df.style.background_gradient(cmap=cm))
+                    # cm = sns.light_palette("green", as_cmap=True, reverse=True) #
+                    st.dataframe(to_display_df) #.style.background_gradient(cmap=cm))
 
                     df['duration-months'] = ((df['End Date'] - df['Start Date'])/np.timedelta64(1, 'M')).astype(int)
                     ints = [Intervention(df['duration-months'][i],(int(df['End Date'][i].year),int(df['End Date'][i].month)),i+1,"test",1) for i in range(df.shape[0])]
