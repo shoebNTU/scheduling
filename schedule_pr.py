@@ -25,12 +25,12 @@ def app():
     if temp:
 
         with st.expander('Interventions',expanded=False):
-            st.info('Bundling logic:  \n Cost-sum, Risk-max, FPMK-sum, Startdate-min, Enddate-max')
+            st.info('Bundling logic:  \n Cost-sum, Risk-min, FPMK-sum, Startdate-min, Enddate-max')
             df = pd.read_excel(temp)
             st.text('Before bundling')
             st.dataframe(df)
             df['Bundle'].fillna(df.index.to_series()+1000, inplace=True) # giving bundle numbers to empty strings, such that groupby works for them
-            df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'max','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
+            df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'min','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
             # st.subheader('Interventions')        
             st.text('After bundling')
             st.dataframe(df)
@@ -57,12 +57,11 @@ def app():
             
             if crit_value:
                 
-                st.info('AHP:  \nMaximizes delta-FPMK, minizes Risk  \nHighest value of AHP-score --> Rank-1')
+                st.info('AHP:  \nMaximizes delta-FPMK, delta-Risk  \nHighest value of AHP-score --> Rank-1')
                 st.info('Cost and AHP based final rank:  \nCost-Benefit Ratio(CBR) = AHP-score/(normalized cost)  \nHighest CBR --> Rank-1')
 
                 if st.button('Rank and schedule'):
-                    to_display_df = df.copy()
-                    df['Risk'] = 1.0/df['Risk'] #taking inverse of risk, trying to maximize
+                    to_display_df = df.copy()                    
                     # a = 1.0
                     # a,b,c = 1.0,1.0,1.0
                     criteria_matrix = np.array([[1.0, crit_value],[1.0/crit_value, 1.0]])# np.array([[1.0,a,b],[1/a,1.0,c],[1/c,1/b,1.0]])
