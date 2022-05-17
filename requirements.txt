@@ -7,6 +7,6 @@ streamlit==1.7.0
 matplotlib==3.5.1
 pandas==1.2.4
 numpy==1.20.1
-scipy==1.8.0
+scipy
 xlrd==2.0.1
 openpyxl==3.0.7
