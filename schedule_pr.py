@@ -1,4 +1,3 @@
-# new_app1.py
 import streamlit as st
 import io
 from utils import *
@@ -26,23 +25,22 @@ def app():
 
         with st.expander('Interventions',expanded=False):
             st.info('Bundling logic:  \n Cost:sum, Delta-Risk:min, Delta-FPMK:sum, Startdate-min, Enddate-max \n Delta-Risk and Delta-FPMK represent improvement in risk and FPMK resulting from the intervention')
-            df = pd.read_excel(temp)
+            df = pd.read_excel(temp)            
             st.text('Before bundling')
-            st.dataframe(df)
+            st.dataframe(df)           
             df['Bundle'].fillna(df.index.to_series()+1000, inplace=True) # giving bundle numbers to empty strings, such that groupby works for them
+            df['Bundle'] = df['Bundle'].astype(str)
+            df_copy = df.copy(deep=True)
             df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'min','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
             # st.subheader('Interventions')        
             st.text('After bundling')
-            st.dataframe(df)
-            
-        # df = pd.read_excel('ip_1.xlsx') # reading inputs
+            st.dataframe(df)            
 
-        # if st.button('Show interventions'):
-        #     st.subheader('Interventions')
-        #     st.write(df)
         with st.expander('Ranking',expanded=False):
 
-            option1 = st.selectbox('What is more important',['Risk','FPMK','Neither of the above'])
+            option1 = st.selectbox('What is more important?',['Risk','FPMK','Neither of the above'])
+
+            bundling_logic = st.selectbox('How do you want to implement AHP?',['Compute benefit for bundled intervention (if any) as a new intervention','Compute benefit for each intervention independent of bundling (adding AHP scores)'])
             
             if option1 == 'Risk':
                 option = st.selectbox('How important is Risk against FPMK',['1 (Equally important)','3 (Somewhat more important)',
@@ -65,7 +63,16 @@ def app():
                     # a = 1.0
                     # a,b,c = 1.0,1.0,1.0
                     criteria_matrix = np.array([[1.0, crit_value],[1.0/crit_value, 1.0]])# np.array([[1.0,a,b],[1/a,1.0,c],[1/c,1/b,1.0]])
+                  
                     ahp_df= AHP_rank(df[['Risk','FPMK']],criteria_matrix) 
+
+                    if 'independent' in bundling_logic:# == 'Compute benefit for each intervention independent of bundling':
+                        ahp_unbundled = AHP_rank(df_copy[['Risk','FPMK']].copy(),criteria_matrix)                    
+                        ahp_unbundled['Bundle'] = df_copy['Bundle'].copy()
+                        unbundled_score = ahp_unbundled.groupby('Bundle').aggregate({'AHP Score':'sum'})
+                        # st.write(unbundled_score)
+                        ahp_df['AHP Score'] = unbundled_score['AHP Score'].reset_index(drop=True)
+
                     st.write(AHP_rel_imp(df[['Risk','FPMK']],criteria_matrix))
                     # st.write(crit_importance)
                     CBR = ahp_df['AHP Score'].values/(df.Cost/df.Cost.sum()).values # changed for AHP-maximize
@@ -78,8 +85,8 @@ def app():
                     to_display_df['Benefit Cost Ratio'] = CBR#/(np.sum(CBR))
                     to_display_df['Benefit Cost Ratio-ranks'] = rank_#ahp_df['rank'].apply(np.int64)#.astype(uint8) 
                     to_display_df.drop(columns=['Start Date','End Date'],inplace=True)               
-                    # cm = sns.light_palette("green", as_cmap=True, reverse=True) #
-                    st.dataframe(to_display_df) #.style.background_gradient(cmap=cm))
+                    cm = sns.light_palette("green", as_cmap=True, reverse=True) #
+                    st.dataframe(to_display_df.style.background_gradient(cmap=cm))
 
                     df['duration-months'] = ((df['End Date'] - df['Start Date'])/np.timedelta64(1, 'M')).astype(int)
                     ints = [Intervention(df['duration-months'][i],(int(df['End Date'][i].year),int(df['End Date'][i].month)),i+1,"test",1) for i in range(df.shape[0])]
@@ -140,4 +147,3 @@ def app():
                     fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
                     fig.update_xaxes(title_text='Year')
                     st.plotly_chart(fig)
-
