@@ -24,7 +24,7 @@ def app():
     if temp:
 
         with st.expander('Interventions',expanded=False):
-            st.info('Bundling logic:  \n Cost:sum, Delta-Risk:sum, Delta-FPMK:sum, Startdate-min, Enddate-max \n Delta-Risk and Delta-FPMK represent improvement in risk and FPMK resulting from the intervention')
+            st.info('Input interventions having the same string in the **Bundle** column are bundled together (i.e. combined into one)  \n **Bundling logic**:  \n Cost:sum, Delta-Risk:sum, Delta-FPMK:sum, Startdate-min, Enddate-max \n Delta-Risk and Delta-FPMK represent improvement in risk and FPMK resulting from the intervention')
             df = pd.read_excel(temp)            
             st.text('Before bundling')
             st.dataframe(df)           
