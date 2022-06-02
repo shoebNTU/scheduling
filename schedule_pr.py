@@ -24,14 +24,14 @@ def app():
     if temp:
 
         with st.expander('Interventions',expanded=False):
-            st.info('Bundling logic:  \n Cost:sum, Delta-Risk:min, Delta-FPMK:sum, Startdate-min, Enddate-max \n Delta-Risk and Delta-FPMK represent improvement in risk and FPMK resulting from the intervention')
+            st.info('Bundling logic:  \n Cost:sum, Delta-Risk:sum, Delta-FPMK:sum, Startdate-min, Enddate-max \n Delta-Risk and Delta-FPMK represent improvement in risk and FPMK resulting from the intervention')
             df = pd.read_excel(temp)            
             st.text('Before bundling')
             st.dataframe(df)           
             df['Bundle'].fillna(df.index.to_series()+1000, inplace=True) # giving bundle numbers to empty strings, such that groupby works for them
             df['Bundle'] = df['Bundle'].astype(str)
             df_copy = df.copy(deep=True)
-            df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'min','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
+            df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'sum','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
             # st.subheader('Interventions')        
             st.text('After bundling')
             st.dataframe(df)            
@@ -40,8 +40,9 @@ def app():
 
             option1 = st.selectbox('What is more important?',['Risk','FPMK','Neither of the above'])
 
-            bundling_logic = st.selectbox('How do you want to implement AHP?',['Compute benefit for bundled intervention (if any) as a new intervention','Compute benefit for each intervention independent of bundling (adding AHP scores)'])
-            
+#             bundling_logic = st.selectbox('How do you want to implement AHP?',['Compute benefit for bundled intervention (if any) as a new intervention','Compute benefit for each intervention independent of bundling (adding AHP scores)'])
+            bundling_logic = 'independent'
+    
             if option1 == 'Risk':
                 option = st.selectbox('How important is Risk against FPMK',['1 (Equally important)','3 (Somewhat more important)',
                 '5 (Much more important)','7 (Very much more important)', '9 (Absolutely more important)'])
