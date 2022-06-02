@@ -19,7 +19,7 @@ def app():
             st.dataframe(df.iloc[:,:3])
         
         with st.expander('MOO rank (using all 3 criteria)',expanded=False):
-            st.info('Using project implementation code (Jason\'s version)')
+            st.info('Using project implementation code')
             if st.button('Run MOO',key=123):
                 df_ = df.iloc[:,:3].copy()
                 df_['rank'] = MOO(df_)
