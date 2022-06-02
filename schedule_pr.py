@@ -25,13 +25,14 @@ def app():
 
         with st.expander('Interventions',expanded=False):
             st.info('Input interventions having the same string in the **Bundle** column are bundled together (i.e. combined into one)  \n **Bundling logic**:  \n Cost:sum, Delta-Risk:sum, Delta-FPMK:sum, Startdate-min, Enddate-max \n Delta-Risk and Delta-FPMK represent improvement in risk and FPMK resulting from the intervention')
-            df = pd.read_excel(temp)            
+            df = pd.read_excel(temp)
+            df.rename(columns = {'Risk':'Delta-Risk', 'FPMK':'Delta-FPMK'}, inplace = True)
             st.text('Before bundling')
             st.dataframe(df)           
             df['Bundle'].fillna(df.index.to_series()+1000, inplace=True) # giving bundle numbers to empty strings, such that groupby works for them
             df['Bundle'] = df['Bundle'].astype(str)
             df_copy = df.copy(deep=True)
-            df = df.groupby('Bundle').aggregate({'Cost':'sum','Risk':'sum','FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
+            df = df.groupby('Bundle').aggregate({'Cost':'sum','Delta-Risk':'sum','Delta-FPMK':'sum','Start Date':'min','End Date':'max'}).reset_index(drop=True)
             # st.subheader('Interventions')        
             st.text('After bundling')
             st.dataframe(df)            
@@ -65,16 +66,16 @@ def app():
                     # a,b,c = 1.0,1.0,1.0
                     criteria_matrix = np.array([[1.0, crit_value],[1.0/crit_value, 1.0]])# np.array([[1.0,a,b],[1/a,1.0,c],[1/c,1/b,1.0]])
                   
-                    ahp_df= AHP_rank(df[['Risk','FPMK']],criteria_matrix) 
+                    ahp_df= AHP_rank(df[['Delta-Risk','Delta-FPMK']],criteria_matrix) 
 
                     if 'independent' in bundling_logic:# == 'Compute benefit for each intervention independent of bundling':
-                        ahp_unbundled = AHP_rank(df_copy[['Risk','FPMK']].copy(),criteria_matrix)                    
+                        ahp_unbundled = AHP_rank(df_copy[['Delta-Risk','Delta-FPMK']].copy(),criteria_matrix)                    
                         ahp_unbundled['Bundle'] = df_copy['Bundle'].copy()
                         unbundled_score = ahp_unbundled.groupby('Bundle').aggregate({'AHP Score':'sum'})
                         # st.write(unbundled_score)
                         ahp_df['AHP Score'] = unbundled_score['AHP Score'].reset_index(drop=True)
 
-                    st.write(AHP_rel_imp(df[['Risk','FPMK']],criteria_matrix))
+                    st.write(AHP_rel_imp(df[['Delta-Risk','Delta-FPMK']],criteria_matrix))
                     # st.write(crit_importance)
                     CBR = ahp_df['AHP Score'].values/(df.Cost/df.Cost.sum()).values # changed for AHP-maximize
                     # CBR = 1/((df.Cost/df.Cost.sum()).values*ahp_df['AHP Score'].values) # computing cost-benefit ratio
