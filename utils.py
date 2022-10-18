@@ -57,7 +57,7 @@ def MOO(df):
     dist = []
 
     for i in range(num_interventions):
-        dist.append(np.mean(np.min(distance.cdist((inv)[i].reshape(1,3),pareto),axis=1))*1000+inv.sum(axis=1)[i])
+        dist.append(np.mean(np.min(distance.cdist((inv)[i].reshape(1,3),pareto),axis=1))+inv.sum(axis=1)[i])
     dist = np.array(dist)
     rank_MOO = dist.argsort().argsort()+1
     # st.text()
