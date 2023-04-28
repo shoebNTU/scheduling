@@ -40,7 +40,31 @@ def is_pareto_efficient(points):
         next_point_index = np.sum(nondominated_point_mask[:next_point_index+1])
     return is_efficient
 
-def MOO(df):
+def is_pareto_efficient_min_max(points,crit_min_max):
+    is_efficient = np.arange(points.shape[0])
+    n_points = points.shape[0]
+    next_point_index = 0
+    for i in range(n_points):
+        if next_point_index >= points.shape[0]:
+            break
+
+        condition = np.zeros((points.shape[0],))
+        for col in range(points.shape[1]):
+            if crit_min_max[col] == 'Minimize':
+                temp_cond = points[:,col] < points[next_point_index,col]
+            else:
+                temp_cond = points[:,col] > points[next_point_index,col]
+            condition = condition + temp_cond
+
+        nondominated_point_mask = condition.astype(bool).copy() # np.any(points < points[next_point_index],axis=1)
+        nondominated_point_mask[next_point_index] = True
+        is_efficient = is_efficient[nondominated_point_mask]
+        points = points[nondominated_point_mask]
+        next_point_index = np.sum(nondominated_point_mask[:next_point_index+1])
+
+    return is_efficient
+
+def MOO(df,crit_min_max):
     inv = df.values
     points_dict = {1:1, 2:500, 3:100, 4:50, 5:25, 6:18, 7:15, 8:12, 9:10, 10:9}
     num_interventions = inv.shape[0]
@@ -63,14 +87,14 @@ def MOO(df):
     # st.text()
     return rank_MOO
 
-def MOO_explain(df):
+def MOO_explain(df,crit_min_max):
     cols = df.columns.to_list() # taking first two columns
     points_dict = {1:1, 2:500, 3:100, 4:50, 5:25, 6:18, 7:15, 8:12, 9:10, 10:9}
-    H = 8 # hard-coding to 8 for easy visualization #points_dict[df.shape[0]]
+    H = points_dict[df.shape[0]]
     conv_comb = get_grid(H,df.shape[0]).dot(df.values) # getting convex combination here
-    mask = is_pareto_efficient(conv_comb) # getting index of points of conv_comb that are pareto optimal
+    mask = is_pareto_efficient_min_max(conv_comb,crit_min_max) # getting index of points of conv_comb that are pareto optimal
     
-    st.info('Comparing on the basis of - '+(',').join(cols)) # 
+    st.info('Comparing on the basis of - '+(', ').join(cols)) # 
     df_convcomb = pd.DataFrame(conv_comb,columns=cols) #hard-coding to risk, fpmk
     df_convcomb['Pareto-status'] = 'Non-pareto'
     df_convcomb.loc[mask,'Pareto-status'] = 'Pareto' # set of pareto-points
@@ -84,7 +108,7 @@ def MOO_explain(df):
     dist = []
 
     for i in range(num_interventions):
-        dist.append(np.mean(np.min(distance.cdist((inv)[i].reshape(1,2),pareto),axis=1))*1000+inv.sum(axis=1)[i])
+        dist.append(np.mean(np.min(distance.cdist((inv)[i].reshape(1,2),pareto),axis=1))+inv.sum(axis=1)[i])
     dist = np.array(dist)
 
     rank_MOO = dist.argsort().argsort()+1
@@ -116,6 +140,47 @@ def MOO_explain(df):
     # fig.update_traces(textposition='top center')
     return fig,df
 
+
+def MOO_explain_3d(df,crit_min_max):
+    cols = df.columns.to_list() # taking first two columns
+    points_dict = {1:1, 2:500, 3:100, 4:50, 5:25, 6:18, 7:15, 8:12, 9:10, 10:9}
+    H = points_dict[df.shape[0]] # hard-coding to 8 for easy visualization #points_dict[df.shape[0]]
+    conv_comb = get_grid(H,df.shape[0]).dot(df.values) # getting convex combination here
+    mask = is_pareto_efficient_min_max(conv_comb,crit_min_max) # getting index of points of conv_comb that are pareto optimal
+    
+    st.info('Comparing on the basis of - '+(', ').join(cols)) # 
+    df_convcomb = pd.DataFrame(conv_comb,columns=cols) 
+    df_convcomb['Pareto-status'] = 'Non-pareto'
+    df_convcomb.loc[mask,'Pareto-status'] = 'Pareto' # set of pareto-points
+
+    # ranking here 
+    inv = df.values.copy()
+    num_interventions = inv.shape[0]
+    pareto = conv_comb[mask]/inv.sum(axis=0)
+    inv = inv/inv.sum(axis=0)
+
+    dist = []
+
+    for i in range(num_interventions):
+        dist.append(np.mean(np.min(distance.cdist((inv)[i].reshape(1,-1),pareto),axis=1))+inv.sum(axis=1)[i])
+    dist = np.array(dist)
+
+    rank_MOO = dist.argsort().argsort()+1
+    df['rank'] = rank_MOO
+    df['rank'] = df['rank'].apply(lambda x:'Rank'+str(x))
+
+    # Scatter plot
+    data = [go.Scatter3d(x=df[cols[0]],y=df[cols[1]],z=df[cols[2]], mode='markers',marker=dict(size=6,color='#636EFA'),opacity=0.8,name='User options', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f} <br>' + cols[2] + ': %{z:.2f}',marker_symbol='diamond',text=df['rank'].to_list(),textposition="bottom center",textfont_size=16),
+        go.Scatter3d(x=df_convcomb[cols[0]],y=df_convcomb[cols[1]], z=df_convcomb[cols[2]],mode='markers',marker=dict(size=5),opacity=0.6,name='Convex combinations', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f}<br>' + cols[2] + ': %{z:.2f}',marker_symbol='x'),
+        go.Scatter3d(x=df_convcomb[cols[0]][mask],y=df_convcomb[cols[1]][mask], z=df_convcomb[cols[2]][mask], mode='markers',marker=dict(size=20),opacity=0.6,name='Pareto-optimal options', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f}<br>' + cols[2] + ': %{z:.2f}',marker_symbol='cross'),
+        go.Scatter3d(x=df[cols[0]],y=df[cols[1]],z=df[cols[2]],mode='markers+text',marker=dict(size=6,color='#636EFA'),opacity=0.6,name='User options', 
+                        hovertemplate=cols[0]+': %{x:.2f} <br>'+ cols[1]+': %{y:.2f}<br>' + cols[2] + ': %{z:.2f}',marker_symbol='diamond',text=df['rank'].to_list(),textposition="bottom center",textfont_size=16,showlegend=False)]
+    fig = go.Figure(data)
+    fig.update_layout(scene=dict(xaxis_title=cols[0],yaxis_title=cols[1],zaxis_title = cols[2]))
+    return fig,df
 
 # AHP function
 class AHP():
@@ -325,6 +390,4 @@ class Intervention():
         self.cost = cost
         self.risk = risk
         self.fpmk = fpmk
-            
-        
-
+           
