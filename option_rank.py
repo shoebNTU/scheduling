@@ -1,12 +1,11 @@
 # new_app1.py
 import pandas as pd
 import streamlit as st
-import io
-
-from utils import MOO_explain,MOO
+from utils import MOO_explain, MOO_explain_3d
+from itertools import combinations
 
 def app():                
-    st.title('MOO')
+    st.title('Multi-objective Optimization (MOO)')
 
     st.sidebar.title("Upload file")
     temp = st.sidebar.file_uploader(label='', type=['xlsx'])
@@ -16,25 +15,48 @@ def app():
         
         with st.expander('Options',expanded=False):
             df = pd.read_excel(temp)
-            st.dataframe(df.iloc[:,:3])
-        
-        with st.expander('MOO rank (using all 3 criteria)',expanded=False):
-            st.info('Using project implementation code')
-            if st.button('Run MOO',key=123):
-                df_ = df.iloc[:,:3].copy()
-                df_['rank'] = MOO(df_)
-                st.write(df_)
-                # st.plotly_chart(fig,use_container_width=True)
-        
-        with st.expander('MOO visualized (using 2 criteria)',expanded=False):
-            st.info('Trying to visualize MOO method here. Two departures have been made from the implementation version in the project to ease visualization -  \n1) Only two criteria have been considered while doing ranking  \n2) Number of points along each criteria to get convex combination of objectives has been set arbitrarily set to a relatively lower value as H=8 (please refer section 6.6.6.1 of UJ5 SDS for more details on H)')
-            cols = df.columns.to_list()
-            option1 = st.selectbox('Select two criteria to base your MOO on',
-            [[cols[0],cols[1]],[cols[1],cols[2]],[cols[0],cols[2]]])
+            cols = [col for col in df.columns if col.lower().split(' ')[0] not in ['bundle', 'start','end']]
+            df = df[cols]
+            df = df.select_dtypes(exclude='datetime64[ns]') #remove datetime type
+            st.dataframe(df)
 
-            if st.button('Run MOO',key=456):
-                fig,df = MOO_explain(df[option1])
-                st.write(df)
-                st.plotly_chart(fig,use_container_width=True)
+        with st.expander('Criteria',expanded=True):
+            criteria = st.multiselect(
+                'What criteria do you want to use for comparison? Please select at least 2 criteria.',
+                df.columns.to_list(),df.columns.to_list())
 
-    
+            if len(criteria)>1:
+                crit_min_max = []
+                for crit in criteria:                    
+                    min_max =  st.selectbox(f'Do you wish to minimize or maximize {crit}',('Minimize','Maximize'))
+                    crit_min_max.append(min_max)
+                df = df[list(criteria)]
+            else:
+                st.error("Please select at least 2 or more criteria.")
+        
+        with st.expander('MOO visualized',expanded=True):
+
+            if len(criteria)>1:
+
+                st.info('Visualizing MOO method here')
+                cols = df.columns.to_list()
+
+                if len(cols)>3:
+                    st.info('We cannot visualize beyond three criteria. \nHence, limiting criteria to three.')
+                    option1 = st.selectbox('Select three criteria to base your MOO on',list(map(list,list(combinations(df.columns, 3)))))
+                else:
+                    option1 = list(df.columns)
+
+                if len(option1) == 2:
+                    if st.button('Run MOO',key=456):
+                        fig,df = MOO_explain(df[option1],crit_min_max)
+                        st.write(df)
+                        st.plotly_chart(fig,use_container_width=True)
+                else:
+                    if st.button('Run MOO',key=345):
+                        fig,df = MOO_explain_3d(df[option1],crit_min_max)
+                        st.write(df)
+                        st.plotly_chart(fig,use_container_width=True)
+
+            else:
+                st.error("Please select at least 2 or more criteria.")
