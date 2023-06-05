@@ -9,4 +9,4 @@ streamlit==1.7.0
 scipy
 xlrd==2.0.1
 openpyxl==3.0.7
-python_version == 3.8.6
+python_version == 3.8.0
