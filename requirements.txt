@@ -1,5 +1,5 @@
 pip
-plotly==5.3.1
+plotly
 seaborn==0.11.1
 more-itertools==8.7.0
 matplotlib==3.5.1
@@ -9,4 +9,3 @@ streamlit==1.7.0
 scipy
 xlrd==2.0.1
 openpyxl==3.0.7
-python == 3.8.0
