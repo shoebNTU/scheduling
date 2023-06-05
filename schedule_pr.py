@@ -87,8 +87,8 @@ def app():
                     to_display_df['Benefit Cost Ratio'] = CBR#/(np.sum(CBR))
                     to_display_df['Benefit Cost Ratio-ranks'] = rank_#ahp_df['rank'].apply(np.int64)#.astype(uint8) 
                     to_display_df.drop(columns=['Start Date','End Date'],inplace=True)               
-                    cm = sns.light_palette("green", as_cmap=True, reverse=True) #
-                    st.dataframe(to_display_df.style.background_gradient(cmap=cm))
+#                     cm = sns.light_palette("green", as_cmap=True, reverse=True) #
+                    st.dataframe(to_display_df) #.style.background_gradient(cmap=cm))
 
                     df['duration-months'] = ((df['End Date'] - df['Start Date'])/np.timedelta64(1, 'M')).astype(int)
                     ints = [Intervention(df['duration-months'][i],(int(df['End Date'][i].year),int(df['End Date'][i].month)),i+1,"test",1) for i in range(df.shape[0])]
@@ -119,10 +119,7 @@ def app():
                         
                         current_num = np.array([x.num for x in current_projects]).sum()
                         starting_num = np.array([x.num for x in starting_projects]).sum()
-                        
-                    #     if time%12 == 1:
-                    #         print(time//12 + 2020)
-                    #         print([(int(x.rank),x.startdate.year_month(),x.enddate.year_month()) for x in current_projects])
+
                             
                         while current_num > supply_num:
                             local_max = np.array(local_ranks).argmax() # max rank of starting-projects, lowest priority intervention
