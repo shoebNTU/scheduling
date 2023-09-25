@@ -90,7 +90,7 @@ def app():
 #                     cm = sns.light_palette("green", as_cmap=True, reverse=True) #
                     st.dataframe(to_display_df) #.style.background_gradient(cmap=cm))
 
-                    df['duration-months'] = ((df['End Date'] - df['Start Date'])/np.timedelta64(1, 'M')).astype(int)
+                    df['duration-months'] = df['End Date'].dt.to_period('M') - df.['Start Date'].dt.to_period('M') # ((df['End Date'] - df['Start Date'])/np.timedelta64(1, 'M')).astype(int)
                     ints = [Intervention(df['duration-months'][i],(int(df['End Date'][i].year),int(df['End Date'][i].month)),i+1,"test",1) for i in range(df.shape[0])]
                     list_tasks_dates= []
 
