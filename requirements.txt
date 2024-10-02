@@ -8,3 +8,4 @@ streamlit==1.7.0
 scipy
 xlrd==2.0.1
 openpyxl==3.1.0
+numpy==1.26.4
